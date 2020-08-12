@@ -3,7 +3,7 @@ import axios from 'axios'
 import store from '@/store'
 
 const request = axios.create({
-  baseURL: 'http://ttapi.research.itcast.cn/' // 接口的基准路径
+  baseURL: 'http://ttapi.research.itcast.cn' // 接口的基准路径
 })
 
 // Add a request interceptor

@@ -20,22 +20,44 @@
         + 在每次请求完毕后，需要手动将 loading 设置为 false，表示本次加载结束
         + 所有数据加载结束，finished 为 true，此时不会触发 load 事件
      -->
-    <van-list
-      v-model="loading"
-      :finished="finished"
-      finished-text="没有更多了"
-      @load="onLoad"
+    <van-pull-refresh
+      v-model="refreshing"
+      @refresh="onRefresh"
+      success-duration="2000"
+      :success-text="refreshSuccessText"
     >
-      <van-cell v-for="item in list" :key="item" :title="item" />
-    </van-list>
+      <van-list
+        v-model="loading"
+        :finished="finished"
+        finished-text="没有更多了"
+        :error.sync="error"
+        error-text="请求失败，点击重新加载"
+        @load="onLoad"
+      >
+        <articleItem
+          v-for="(article, index) in list"
+          :key="index"
+          :article="article"
+        >
+        </articleItem>
+        <!-- <van-cell
+          v-for="(article, index) in list"
+          :key="index"
+          :title="article.title"
+        /> -->
+      </van-list>
+    </van-pull-refresh>
   </div>
 </template>
 
 <script>
 import { getArticles } from '@/api/article'
+import articleItem from '@/components/article-item'
 export default {
   name: 'articlelist',
-  components: {},
+  components: {
+    articleItem
+  },
   props: {
     // 接受传入的频道列表信息
     channel: {
@@ -47,7 +69,11 @@ export default {
     return {
       list: [],
       loading: false, // 控制loading状态
-      finished: false // 控制数据加载结束的状态
+      finished: false, // 控制数据加载结束的状态
+      timestamp: null, // 请求获取数据的时间戳
+      error: false, // 控制失败提示状态
+      refreshing: false, // 刷新正在加载状态
+      refreshSuccessText: '' // 下拉刷新成功提示文本
     }
   },
   computed: {},
@@ -59,18 +85,82 @@ export default {
     async onLoad() {
       // 1.请求获取数据
       try {
-        const { data: res } = await getArticles()
-        console.log(res)
+        const { data: res } = await getArticles({
+          // 频道ID
+          channel_id: this.channel.id,
+          // timestamp简单来说就是页码
+          // 请求第一页数据传当前最新时间戳
+          // 用于请求之后数据的时间戳会在当前请求结果中返回给你
+          timestamp: this.timestamp || Date.now(),
+          // 是否包含置顶，进入页面第一次请求时要包含置顶文章，1-包含置顶，0-不包含
+          with_top: 1
+        })
+
+        // 随机失败测试
+        // if (Math.random() > 0.5) {
+        //   JSON.parse('asdf')
+        // }
+
+        // 2.把请求结果放到list数组中
+        const { results } = res.data
+        // push合并数组,...是数组的展开符,等于result[0],result[1]...把数组里的元素全部拿出来
+        this.list.push(...results)
+        // 3.一次数据加载完成后要把加载状态结束
+        // loading关闭之后才能触发下一次的加载更多
+        this.loading = false
+        // 判断数据是否全部加载完成,results没有长度则返回
+        if (results.length) {
+          this.timestamp = res.data.pre_timestamp
+        } else {
+          this.finished = true
+        }
       } catch (err) {
-        this.$toast('获取文章列表数据失败!')
+        this.error = true
+        this.loading = false
       }
-      // 2.把请求结果放到list数组中
-      // 3.一次数据加载完成后要把加载状态结束
-      // loading关闭之后才能触发下一次的加载更多
-      // 判断数据是否全部加载完成
+    },
+    async onRefresh() {
+      // 1.请求获取数据
+      try {
+        const { data: res } = await getArticles({
+          // 频道ID
+          channel_id: this.channel.id,
+          // timestamp简单来说就是页码
+          // 请求第一页数据传当前最新时间戳
+          // 用于请求之后数据的时间戳会在当前请求结果中返回给你
+          timestamp: Date.now(), // 下拉刷新每次请求最新数据
+          // 是否包含置顶，进入页面第一次请求时要包含置顶文章，1-包含置顶，0-不包含
+          with_top: 1
+        })
+
+        // // 随机失败测试
+        // if (Math.random() > 0.5) {
+        //   JSON.parse('asdf')
+        // }
+
+        // 2.将数据追加到顶部列表,unshift是数组往前插入
+        const { results } = res.data
+        this.list.unshift(...results)
+        // 3.关闭下拉刷新的loading状态
+        this.refreshing = false
+        // 4.更新下拉刷新成功提示的文本
+        this.refreshSuccessText = `刷新成功!更新了${results.length}条数据`
+      } catch (err) {
+        this.refreshSuccessText = '刷新失败!'
+        this.refreshing = false
+      }
     }
   }
 }
 </script>
 
-<style scoped lang="less"></style>
+<style scoped lang="less">
+.article-list {
+  // 百分比是相对父元素的
+  // height: 100%;
+  // 视口单位vh,vw.视口就是根据浏览器窗口大小的单位,不受父元素影响,1vh可视窗口高度的1%,比如窗口高度750px,则1vh=7.5px
+  height: 79vh;
+  // 溢出滚动
+  overflow-y: auto;
+}
+</style>

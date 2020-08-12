@@ -10,8 +10,8 @@ import request from '@/utils/request'
 export const getArticles = params => {
   return request({
     method: 'GET',
-    path: '/app/v1_1/articles',
-    // params!对象!用来传递query查询参数
+    url: '/app/v1_1/articles',
+    // params!对象!用来传递query查询参数,这里params=params所以简写为params
     params
   })
 }

@@ -1,7 +1,7 @@
 <template>
   <div class="home-container">
     <!-- 导航栏 -->
-    <van-nav-bar class="navbar">
+    <van-nav-bar class="navbar" fixed>
       <template #title>
         <van-button class="navbar-btn" round type="primary" size="large">
           <i class="toutiao toutiao-sousuo"></i>
@@ -67,6 +67,7 @@ export default {
 
 <style scoped lang="less">
 .home-container {
+  padding-top: 174px;
   margin-bottom: 100px;
   .navbar {
     background-color: #2992ff;
@@ -85,6 +86,12 @@ export default {
   }
   /deep/ .channel-tabs {
     .van-tabs__wrap {
+      position: fixed;
+      top:92px;
+      // 堆叠属性,越高的显示在越前,把后面的覆盖
+      z-index: 1;
+      left:0;
+      right: 0;
       height: 82px;
       .van-tab {
         width: 200px;
