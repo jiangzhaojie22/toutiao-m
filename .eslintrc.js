@@ -26,6 +26,7 @@ module.exports = {
     'vue/no-unused-vars': 0,
     'no-unused-vars': 0,
     'comma-spacing': 0,
-    'camelcase': 0
+    'camelcase': 0,
+    'eol-last': 0
   }
 }

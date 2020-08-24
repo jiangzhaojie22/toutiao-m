@@ -3,16 +3,26 @@
     <!-- 导航栏 -->
     <van-nav-bar class="navbar" fixed>
       <template #title>
-        <van-button class="navbar-btn" round type="primary" size="large">
-          <i class="toutiao toutiao-sousuo"></i>
-          <span class="text">搜索</span>
+        <van-button
+          class="search-btn"
+          round
+          slot="title"
+          type="info"
+          size="small"
+          icon="search"
+          to="/search"
+        >搜索
         </van-button>
       </template>
     </van-nav-bar>
     <!-- 频道列表 -->
-    <van-tabs swipeable animated class="channel-tabs">
+    <van-tabs
+      swipeable
+      animated
+      class="channel-tabs"
+      v-model="active"
+    >
       <van-tab
-        v-model="active"
         v-for="channel in channels"
         :key="channel.id"
         :title="channel.name"
@@ -21,27 +31,52 @@
         <!-- 把对应的频道传给频道列表 -->
         <articlelist :channel="channel" />
       </van-tab>
-      <div slot="nav-right" class="placeHolder"></div>
+      <div
+        slot="nav-right"
+        class="placeHolder"
+      ></div>
       <div slot="nav-right" class="hamburger-btn">
-        <i class="toutiao toutiao-gengduo"></i>
+        <i
+          class="toutiao toutiao-gengduo"
+          @click="showPopup"
+        ></i>
       </div>
     </van-tabs>
+    <!-- 频道编辑弹出层 -->
+    <van-popup
+      v-model="show"
+      position="bottom"
+      closeable
+      close-icon-position="top-left"
+      :style="{ height: '100%' }"
+    >
+      <!-- 将data里的channels传给myChannels在频道编辑页面接收 -->
+      <channelEdit
+        :my-channels="channels"
+        :active="active"
+        @update-active="onUpdateActive"
+      />
+    </van-popup>
   </div>
 </template>
 
 <script>
 import { getUserChannels } from '@/api/user'
 import articlelist from './components/article-list'
+import ChannelEdit from './components/channel-edit'
+
 export default {
   name: 'homeIndex',
   components: {
-    articlelist
+    articlelist,
+    ChannelEdit
   },
   props: {},
   data() {
     return {
-      active: 0,
-      channels: []
+      active: '',
+      channels: [],
+      show: false
     }
   },
   computed: {},
@@ -53,13 +88,22 @@ export default {
   methods: {
     async loadChannels() {
       try {
-        const { data: res } = await getUserChannels()
+        const {
+          data: res
+        } = await getUserChannels()
         console.log(res)
         this.channels = res.data.channels
         console.log(this.channels)
       } catch (err) {
         this.$toast('获取频道列表错误!')
       }
+    },
+    showPopup() {
+      this.show = true
+    },
+    onUpdateActive(index) {
+      this.active = index
+      this.show = false
     }
   }
 }
@@ -71,26 +115,21 @@ export default {
   margin-bottom: 100px;
   .navbar {
     background-color: #2992ff;
-    .navbar-btn {
+    .search-btn {
       width: 400px;
       height: 70px;
       background-color: #53a7ff;
       border: none;
-      i.toutiao {
-        font-size: 32px;
-      }
-      span.text {
-        font-size: 28px;
-      }
+      font-size: 28px;
     }
   }
   /deep/ .channel-tabs {
     .van-tabs__wrap {
       position: fixed;
-      top:92px;
+      top: 92px;
       // 堆叠属性,越高的显示在越前,把后面的覆盖
       z-index: 1;
-      left:0;
+      left: 0;
       right: 0;
       height: 82px;
       .van-tab {

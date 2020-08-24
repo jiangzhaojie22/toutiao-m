@@ -164,6 +164,7 @@ export default {
   height: 46px;
   line-height: 46px;
   font-size: 22px;
+  white-space: nowrap;
   color: #666;
 }
 .login-btn-wrap {

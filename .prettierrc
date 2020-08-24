@@ -1,7 +1,5 @@
 {   
-    // 超过最大值换行
-    "printWidth": 200,
-    // 让prettier使用eslint的代码格式进行校验
+    "printWidth": 100,
     "eslintIntegration": true,
     "tabWidth": 2,
     "semi": false,
