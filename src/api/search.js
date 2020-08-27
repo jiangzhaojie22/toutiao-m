@@ -17,3 +17,11 @@ export const getSearchSuggestions = q => {
     }
   })
 }
+export const getSearchResult = params => {
+  return request({
+    method: 'GET',
+    url: '/app/v1_0/search',
+    // params!对象!用来传递query查询参数,这里params=params所以简写为params
+    params
+  })
+}

@@ -1,11 +1,13 @@
 <template>
   <div class="search-suggestion">
     <van-cell
-      :title="suggestion"
       icon="search"
-      v-for="(suggestion, index) in suggestions"
+      v-for="(text, index) in suggestions"
       :key="index"
-    />
+      @click="$emit('search',text)"
+    >
+    <div slot="title" v-html="highLightText(text)"></div>
+      </van-cell>
   </div>
 </template>
 
@@ -25,7 +27,7 @@ export default {
   },
   data() {
     return {
-      suggestions: [] // 联想建议数据列表
+      suggestions: [], // 联想建议数据列表
     }
   },
   computed: {},
@@ -51,9 +53,18 @@ export default {
       } catch (err) {
         this.$toast('数据获取失败,请稍后重试!')
       }
+    },
+    highLightText(text){
+      const ht = `<span class="active">${this.searchText}</span>`
+      const reg = new RegExp(this.searchText,'gi')
+      return text.replace(reg,ht)
     }
   }
 }
 </script>
 
-<style scoped lang="less"></style>
+<style scoped lang="less">
+/deep/span.active{
+  color: #2992FF;
+}
+</style>

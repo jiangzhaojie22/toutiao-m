@@ -1,9 +1,10 @@
 {   
-    "printWidth": 100,
+    "printWidth": 80,
     "eslintIntegration": true,
     "tabWidth": 2,
     "semi": false,
     "singleQuote": true,
     "bracketSpacing": true,
-    "arrowParens": "avoid"
+    "arrowParens": "avoid",
+    "trailingComma":"es5"
 }

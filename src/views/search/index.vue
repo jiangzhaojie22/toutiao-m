@@ -10,14 +10,19 @@
         @search="onSearch"
         @cancel="onCancel"
         @focus="isResultShow = false"
+        class="search-form"
       />
     </form>
     <!-- 搜索结果 -->
-    <search-result v-if="isResultShow" />
+    <search-result
+      v-if="isResultShow"
+      :search-text="searchText"
+    />
     <!-- 联想建议 -->
     <search-suggestion
       v-else-if="searchText"
       :search-text="searchText"
+      @search="onSearch"
     />
     <!-- 搜索历史记录 -->
     <search-history v-else />
@@ -35,13 +40,13 @@ export default {
   components: {
     searchHistory,
     searchResult,
-    searchSuggestion
+    searchSuggestion,
   },
   props: {},
   data() {
     return {
       searchText: '',
-      isResultShow: false /* 控制搜索结果的展示 */
+      isResultShow: false /* 控制搜索结果的展示 */,
     }
   },
   computed: {},
@@ -50,19 +55,28 @@ export default {
   mounted() {},
   methods: {
     onSearch(val) {
+      this.searchText = val
       this.isResultShow = true
     },
     onCancel() {
       this.$router.back()
-    }
-  }
+    },
+  },
 }
 </script>
 
 <style scoped lang="less">
 .search-container {
+  padding-top: 108px;
   .van-search__action {
     color: #fff;
+  }
+  .search-form{
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    z-index: 1;
   }
 }
 </style>
