@@ -1,5 +1,27 @@
 <template>
-  <van-cell class="article-item">
+<!-- es6可以这样写:"`/article/${article.art_id}`" -->
+<!-- 完整写法这样写"'/article/'+article.art_id" -->
+<!-- 路由传参这样写 -->
+  <!--
+    Cell 单元格的 to 属性和 VueRouter 中的 RouterLink 导航组件的 to 属性用法是一样的
+    用法参考链接：https://router.vuejs.org/zh/api/#to
+    es6可以这样写:"`/article/${article.art_id}`"
+    完整写法这样写"'/article/'+article.art_id"
+    路由传参这样写
+   -->
+  <van-cell
+    class="article-item"
+    :to="{
+      // 根据路由名称进行跳转
+      name: 'article',
+
+      // 传递路由动态参数
+      params: {
+        // 属性名：路由路径中设计的动态参数名称
+        articleId: article.art_id
+      }
+    }"
+  >
     <div class="title van-multi-ellipsis--l2" slot="title">
       {{ article.title }}
     </div>
