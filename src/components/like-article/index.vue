@@ -1,22 +1,22 @@
 <template>
   <van-button
-    :icon="value ? 'star' : 'star-o'"
+    :icon="value === 1 ? 'good-job' : 'good-job-o'"
     :class="{
-      collected: value,
+      liked: value === 1,
     }"
-    @click="onCollect"
     :loading="loading"
+    @click="onLike"
   />
 </template>
 
 <script>
-import { collectArticeById, cancelCollectArticeById } from '@/api/article'
+import { addLike, cancelAddLike } from '@/api/article'
 export default {
-  name: 'collectArticle',
+  name: 'likeArticleIndex',
   components: {},
   props: {
     value: {
-      type: Boolean,
+      type: Number,
       required: true,
     },
     articleId: {
@@ -26,7 +26,7 @@ export default {
   },
   data() {
     return {
-      loading: false,
+      msg: '',
     }
   },
   computed: {},
@@ -34,16 +34,18 @@ export default {
   created() {},
   mounted() {},
   methods: {
-    async onCollect() {
+    async onLike() {
       this.loading = true
       try {
-        if (this.value) {
-          await cancelCollectArticeById(this.articleId)
+        let status = -1
+        if (this.value === 1) {
+          await cancelAddLike(this.articleId)
         } else {
-          await collectArticeById(this.articleId)
+          await addLike(this.articleId)
+          status = 1
         }
-        this.$emit('input', !this.value)
-        this.$toast.success(!this.value ? '收藏成功!' : '取消收藏')
+        this.$emit('input', status)
+        this.$toast.success(status === 1 ? '点赞成功!' : '取消点赞')
       } catch (err) {
         this.$toast('操作失败!请重试')
       }
@@ -54,9 +56,9 @@ export default {
 </script>
 
 <style scoped lang="less">
-.collected {
+.liked {
   .van-icon {
-    color: #ffa500;
+    color: #e5645f;
   }
 }
 </style>

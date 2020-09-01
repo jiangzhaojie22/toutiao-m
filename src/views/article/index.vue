@@ -86,17 +86,27 @@
           ref="article-content"
         ></div>
         <van-divider>正文结束</van-divider>
+        <!-- 评论列表 -->
+        <commentList
+          :source="article.art_id"
+          @onload-success="totalCommentCount = $event.total_count"
+        />
         <!-- 底部区域 -->
         <div class="article-bottom">
           <van-button class="comment-btn" type="default" round size="small"
             >写评论</van-button
           >
-          <van-icon color="#777" name="good-job-o" />
+          <likeArticle
+            class="btn-item"
+            v-model="article.attitude"
+            :article-id="article.art_id"
+          />
           <collectArticle
             class="btn-item"
             v-model="article.is_collected"
+            :article-id="article.art_id"
           />
-          <van-icon name="comment-o" info="123" color="#777" />
+          <van-icon name="comment-o" :info="totalCommentCount" color="#777" />
           <van-icon name="share" color="#777777"></van-icon>
         </div>
         <!-- /底部区域 -->
@@ -128,12 +138,16 @@ import { getArticleById } from '@/api/article'
 import { ImagePreview } from 'vant'
 import FollowUser from '@/components/follow-user'
 import collectArticle from '@/components/collect-article'
+import likeArticle from '@/components/like-article'
+import commentList from './components/comment-list'
 
 export default {
   name: 'ArticleIndex',
   components: {
     FollowUser,
     collectArticle,
+    likeArticle,
+    commentList,
   },
   props: {
     articleId: {
@@ -147,6 +161,7 @@ export default {
       loading: false,
       errStatus: 0,
       followLoading: false,
+      totalCommentCount: null,
     }
   },
   computed: {},
@@ -154,7 +169,9 @@ export default {
   created() {
     this.loadingArticle()
   },
-  mounted() {},
+  mounted() {
+    this.commentCount()
+  },
   methods: {
     onClickLeft() {
       this.$router.back()
