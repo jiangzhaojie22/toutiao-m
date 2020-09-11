@@ -4,15 +4,18 @@
     <van-nav-bar
       class="page-nav-bar"
       left-arrow
-      @click-left="onClickLeft"
       title="黑马头条"
+      @click-left="$router.back()"
     ></van-nav-bar>
     <!-- /导航栏 -->
 
     <div class="main-wrap">
       <!-- 加载中 -->
       <div v-if="loading" class="loading-wrap">
-        <van-loading color="#3296fa" vertical>加载中</van-loading>
+        <van-loading
+          color="#3296fa"
+          vertical
+        >加载中</van-loading>
       </div>
       <!-- /加载中 -->
 
@@ -32,9 +35,7 @@
             :src="article.aut_photo"
           />
           <div slot="title" class="user-name">{{ article.aut_name }}</div>
-          <div slot="label" class="publish-date">
-            {{ article.pubdate | relativeTime }}
-          </div>
+          <div slot="label" class="publish-date">{{ article.pubdate | relativeTime }}</div>
           <!--
             模板中的 $event 是事件参数
             当我们传递给子组件的数据既要使用还要修改。
@@ -86,30 +87,53 @@
           ref="article-content"
         ></div>
         <van-divider>正文结束</van-divider>
-        <!-- 评论列表 -->
-        <commentList
+        <!-- 文章评论列表 -->
+        <comment-list
           :source="article.art_id"
+          :list="commentList"
           @onload-success="totalCommentCount = $event.total_count"
+          @reply-click="onReplyClick"
         />
+        <!-- /文章评论列表 -->
         <!-- 底部区域 -->
         <div class="article-bottom">
-          <van-button class="comment-btn" type="default" round size="small"
-            >写评论</van-button
-          >
-          <likeArticle
-            class="btn-item"
-            v-model="article.attitude"
-            :article-id="article.art_id"
+          <van-button
+            class="comment-btn"
+            type="default"
+            round
+            size="small"
+            @click="isPostShow = true"
+          >写评论</van-button>
+          <van-icon
+            class="comment-icon"
+            name="comment-o"
+            :info="totalCommentCount"
           />
-          <collectArticle
+          <collect-article
             class="btn-item"
             v-model="article.is_collected"
             :article-id="article.art_id"
           />
-          <van-icon name="comment-o" :info="totalCommentCount" color="#777" />
+          <like-article
+            class="btn-item"
+            v-model="article.attitude"
+            :article-id="article.art_id"
+          />
           <van-icon name="share" color="#777777"></van-icon>
         </div>
         <!-- /底部区域 -->
+
+        <!-- 发布评论 -->
+        <van-popup
+          v-model="isPostShow"
+          position="bottom"
+        >
+          <comment-post
+            :target="article.art_id"
+            @post-success="onPostSuccess"
+          />
+        </van-popup>
+        <!-- 发布评论 -->
       </div>
       <!-- /加载完成-文章详情 -->
 
@@ -124,12 +148,35 @@
       <div v-else class="error-wrap">
         <van-icon name="failure" />
         <p class="text">内容加载失败！</p>
-        <van-button class="retry-btn" @click="loadingArticle"
-          >点击重试</van-button
-        >
+        <van-button
+          class="retry-btn"
+          @click="loadArticle"
+        >点击重试</van-button>
       </div>
       <!-- /加载失败：其它未知错误（例如网络原因或服务端异常） -->
     </div>
+
+    <!-- 评论回复 -->
+    <!--
+      弹出层是懒渲染的：只有在第一次展示的时候才会渲染里面的内容，之后它的关闭和显示都是在切换内容的显示和隐藏
+     -->
+    <van-popup
+      v-model="isReplyShow"
+      position="bottom"
+      style="height: 100%;"
+    >
+      <!--
+        v-if 条件渲染
+          true：渲染元素节点
+          false：不渲染
+       -->
+      <comment-reply
+        v-if="isReplyShow"
+        :comment="currentComment"
+        @close="isReplyShow = false"
+      />
+    </van-popup>
+    <!-- /评论回复 -->
   </div>
 </template>
 
@@ -137,111 +184,140 @@
 import { getArticleById } from '@/api/article'
 import { ImagePreview } from 'vant'
 import FollowUser from '@/components/follow-user'
-import collectArticle from '@/components/collect-article'
-import likeArticle from '@/components/like-article'
-import commentList from './components/comment-list'
+import CollectArticle from '@/components/collect-article'
+import LikeArticle from '@/components/like-article'
+import CommentList from './components/comment-list'
+import CommentPost from './components/comment-post'
+import CommentReply from './components/comment-reply'
 
 export default {
   name: 'ArticleIndex',
   components: {
     FollowUser,
-    collectArticle,
-    likeArticle,
-    commentList,
+    CollectArticle,
+    LikeArticle,
+    CommentList,
+    CommentPost,
+    CommentReply
+  },
+  // 给所有的后代组件提供数据
+  // 注意：不要滥用
+  provide: function () {
+    return {
+      articleId: this.articleId
+    }
   },
   props: {
     articleId: {
       type: [Number, String, Object],
-      required: true,
-    },
+      required: true
+    }
   },
-  data() {
+  data () {
     return {
       article: {}, // 文章详情
-      loading: false,
-      errStatus: 0,
+      loading: true, // 加载中的 loading 状态
+      errStatus: 0, // 失败的状态码
       followLoading: false,
-      totalCommentCount: null,
+      totalCommentCount: 0,
+      isPostShow: false, // 控制发布评论的显示状态
+      commentList: [], // 评论列表
+      isReplyShow: false,
+      currentComment: {} // 当前点击回复的评论项
     }
   },
   computed: {},
   watch: {},
-  created() {
-    this.loadingArticle()
+  created () {
+    this.loadArticle()
   },
-  mounted() {
-    this.commentCount()
-  },
+  mounted () {},
   methods: {
-    onClickLeft() {
-      this.$router.back()
-    },
-    async loadingArticle() {
+    async loadArticle () {
+      // 展示 loading 加载中
       this.loading = true
       try {
-        const { data: res } = await getArticleById(this.articleId)
-        // 随机失败测试
-        if (Math.random() > 0.5) {
-          JSON.parse('asdf')
-        }
-        this.article = res.data
-        // 初始化图片点击预览,这里要延迟渲染,因为前面有个条件判断v-if,不延迟渲染直接拿domref只会拿到undefined
+        const { data } = await getArticleById(this.articleId)
+
+        // if (Math.random() > 0.5) {
+        //   JSON.parse('dsankljdnskaljndlkjsa')
+        // }
+
+        // 数据驱动视图这件事儿不是立即的
+        this.article = data.data
+
+        // 初始化图片点击预览
+        // console.log(this.$refs['article-content'])
         setTimeout(() => {
-          this.loadingImg()
+          this.previewImage()
         }, 0)
+
+        // 请求成功，关闭 loading
+        // this.loading = false
       } catch (err) {
         if (err.response && err.response.status === 404) {
           this.errStatus = 404
         }
+        // this.loading = false
+        // console.log('获取数据失败', err)
       }
-      // 加载结束关闭loading
+
+      // 无论成功还是失败，都需要关闭 loading
       this.loading = false
     },
-    loadingImg() {
-      // 获取dom的特定元素
-      const imgs = this.$refs['article-content'].querySelectorAll('img')
+
+    previewImage () {
+      // 得到所有的 img 节点
+      const articleContent = this.$refs['article-content']
+      const imgs = articleContent.querySelectorAll('img')
+
+      // 获取所有 img 地址
       const images = []
-      // 循环遍历img数组中的src,然后push进新数组images,js控制写法:给img这个dom注册点击事件,
-      // 声明是vant的ImagePreview方法,images = images es6简写images,起始位置index就是点击的index
       imgs.forEach((img, index) => {
         images.push(img.src)
+
+        // 给每个 img 注册点击事件，在处理函数中调用预览
         img.onclick = () => {
           ImagePreview({
+            // 预览的图片地址数组
             images,
-            startPosition: index,
+            // 起始位置，从 0 开始
+            startPosition: index
           })
         }
       })
     },
-    // async onFollow() {
-    //   this.followLoading = true
-    //   try {
-    //     if (this.article.is_followed) {
-    //       // 已关注,取关
-    //       await deleteFollow(this.article.aut_id)
-    //     } else {
-    //       // 未关注
-    //       await addFollow(this.article.aut_id)
-    //     }
-    //     this.article.is_followed = !this.article.is_followed
-    //   } catch (err) {
-    //     let message = '操作失败!请重试!'
-    //     if (err.response && err.response.status === 400) {
-    //       message = '你不能关注你自己!'
-    //       this.$toast(message)
-    //     }
-    //   }
-    //   this.followLoading = false
-    // },
-  },
+
+    onPostSuccess (data) {
+      // 关闭弹出层
+      this.isPostShow = false
+      // 将发布内容显示到列表顶部
+      this.commentList.unshift(data.new_obj)
+    },
+
+    onReplyClick (comment) {
+      this.currentComment = comment
+
+      // 显示评论回复弹出层
+      this.isReplyShow = true
+    }
+  }
 }
 </script>
 
 <style scoped lang="less">
-@import './github-markdown.css';
+@import "./github-markdown.css";
 
 .article-container {
   .main-wrap {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #fff;
+  }
+  .article-detail {
     position: fixed;
     left: 0;
     right: 0;
@@ -249,8 +325,6 @@ export default {
     bottom: 88px;
     overflow-y: scroll;
     background-color: #fff;
-  }
-  .article-detail {
     .article-title {
       font-size: 40px;
       padding: 50px 32px;
@@ -360,7 +434,7 @@ export default {
       padding: 0;
       height: 40px;
       line-height: 40px;
-      color: #777777;
+      color: #777777
     }
     .collect-btn--collected {
       color: #ffa500;

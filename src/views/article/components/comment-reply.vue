@@ -12,7 +12,7 @@
 
     <div class="scroll-wrap">
       <!-- 当前评论项 -->
-      <commentitem :comment="comment" />
+      <comment-item :comment="comment" />
       <!-- /当前评论项 -->
 
       <!-- 评论的回复列表 -->
@@ -48,14 +48,14 @@
 </template>
 
 <script>
-import commentitem from './commentitem'
+import CommentItem from './comment-item'
 import CommentList from './comment-list'
 import CommentPost from './comment-post'
 
 export default {
   name: 'CommentReply',
   components: {
-    commentitem,
+    CommentItem,
     CommentList,
     CommentPost
   },

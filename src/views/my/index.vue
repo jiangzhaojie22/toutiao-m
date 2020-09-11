@@ -8,7 +8,7 @@
           <span class="name">{{ userInfo.name }}</span>
         </div>
         <div class="right">
-          <van-button size="mini" round>编辑资料</van-button>
+          <van-button size="mini" round to="/user-modify">编辑资料</van-button>
         </div>
       </div>
       <div class="data-stats">
@@ -71,12 +71,12 @@ export default {
   props: {},
   data() {
     return {
-      userInfo: {} // 用户信息
+      userInfo: {}, // 用户信息
     }
   },
   computed: {
     // 需要用到的数据,user,这样就可以直接用这个数据了
-    ...mapState(['user'])
+    ...mapState(['user']),
   },
   watch: {},
   created() {
@@ -92,7 +92,7 @@ export default {
       // 在组件中需要使用this.$dialog调用组件
       this.$dialog
         .confirm({
-          title: '标题'
+          title: '标题',
         })
         .then(() => {
           // 确认退出:清除登录状态(容器和本地user清除),重新刷新页面显示未登录界面
@@ -112,8 +112,8 @@ export default {
       } catch (err) {
         this.$toast('获取数据失败!')
       }
-    }
-  }
+    },
+  },
 }
 </script>
 

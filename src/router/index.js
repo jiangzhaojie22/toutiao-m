@@ -43,6 +43,12 @@ const routes = [{
   // 开启 Props 传参，说白了就是把路由参数映射到组件的 props 数据中,所有路由傳參都通過props映射組件之中更靈活,可維護性更好
   props:true 
 },
+{
+  // 动态路由,接收文章id
+  path: '/user-modify',
+  name: 'user-modify',
+  component: () => import('@/views/user-modify'),
+},
 ]
 
 const router = new VueRouter({
